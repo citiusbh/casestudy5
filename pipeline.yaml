@@ -1,0 +1,68 @@
+trigger:
+- none  # No trigger defined, this pipeline will not be automatically triggered
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: Build  # Defines a stage named "Build" for building the application
+    jobs:
+      - job: Build #  Defines a job named "Build" within the "Build" stage
+        steps: 
+         - task: Docker@2  # Task for building and pushing Docker images
+           inputs:
+             containerRegistry: 'serviceconn1'  # Specifies the Azure Container Registry connection
+             repository: 'cs5registry'  # Specifies the Docker repository
+             command: 'buildAndPush'  # Specifies the Docker command to execute
+             Dockerfile: '**/Dockerfile'  # Specifies the path to the Dockerfile
+
+         - task: HelmInstaller@0  # Task for installing Helm on the agent machine
+           inputs:
+             helmVersion: '2.14.1'  # Specifies the version of Helm to install
+             installKubectl: true  # Specifies whether to install kubectl alongside Helm 
+
+         - task: HelmDeploy@0  # Task for deploying Helm charts
+           inputs:
+             azureSubscriptionForACR: 'conn1'
+             azureResourceGroupForACR: 'rg5'
+             azureContainerRegistry: 'cs5registry'
+             command: 'package'  # Specifies the Helm command to execute
+             chartPath: 'emojivoto/emojivoto'     
+
+         - task: PublishBuildArtifacts@1  # Task for publishing build artifacts
+           inputs:
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+            ArtifactName: 'drop'
+            publishLocation: 'Container'  
+
+  - stage: # Defines a new stage
+    jobs:
+      - job: Deploy
+        steps: 
+         - task: DownloadBuildArtifacts@1
+           inputs:
+             buildType: 'current'
+             downloadType: 'single'
+             artifactName: 'drop' # Specifies the name of the artifact to download
+             downloadPath: '$(System.ArtifactsDirectory)'          
+
+         - task: HelmInstaller@0
+           inputs:
+             helmVersion: '2.14.1'
+             installKubectl: true
+
+         - task: HelmDeploy@0
+           inputs:
+             connectionType: 'Azure Resource Manager'
+             azureSubscription: 'Free Trial (****-******-***-****-**)'  # Specifies the Azure subscription
+             azureResourceGroup: 'rg5'
+             kubernetesCluster: 'aksclustercs5'
+             namespace: 'emojivoto'
+             command: 'upgrade'  # Specifies the Helm command to execute
+             chartType: 'FilePath'
+             chartPath: 'emojivoto/emoji'
+             releaseName: 'emojiapp'
+             overrideValues: 'image.tag=$(Build.BuildId)'  # Specifies override values for the Helm chart
+
+
+

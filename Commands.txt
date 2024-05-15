@@ -55,4 +55,4 @@ You can also obtain observability features by installing the viz extension:
 
 
 
-Looking for more? Visit https://linkerd.io/2/tasks
+
