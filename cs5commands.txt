@@ -1,0 +1,58 @@
+ kubectl port-forward svc/springbootapp-my-aks-charts 80:80 -n springbootapp
+ 
+ To install the CLI manually, run:
+ ---------------------------------------------
+ curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
+ 
+ Add the linkerd CLI to your path with:
+ -------------------------------------------
+
+  export PATH=$PATH:/c/Users/vmuser/.linkerd2/bin
+  
+  Now run:
+
+  linkerd check --pre                         # validate that Linkerd can be installed
+  linkerd install --crds | kubectl apply -f - # install the Linkerd CRDs
+  linkerd install | kubectl apply -f -        # install the control plane into the 'linkerd' namespace
+  linkerd check                               # validate everything worked!
+
+You can also obtain observability features by installing the viz extension:
+
+  linkerd viz install | kubectl apply -f -  # install the viz extension into the 'linkerd-viz' namespace
+  linkerd viz check                         # validate the extension works!
+  linkerd viz dashboard                     # launch the dashboard
+ 
+ Install Emojivoto into the emojivoto namespace by running:
+ --------------------------------------------------------
+  curl -sL https://run.linkerd.io/emojivoto.yml | kubectl apply -f -
+  
+  [curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/emojivoto.yml | kubectl apply -f - ]
+  
+  Before we mesh it, let’s take a look at Emojivoto in its natural state. 
+  We’ll do this by forwarding traffic to its web-svc service so that we can point our browser to it. 
+  Forward web-svc locally to port 8080 by running:
+  -------------------------------------------------
+ 
+  kubectl -n emojivoto port-forward svc/web-svc 8080:80
+  
+  URL for opening page in local
+  ----------------------
+  http://localhost:8080
+   
+   
+  Mesh your Emojivoto application by running:
+  -------------------------------------------------
+  
+    kubectl get -n emojivoto deploy -o yaml | linkerd inject - | kubectl apply -f -
+	
+	
+
+	
+	$ linkerd install -l | kubectl apply -f -
+
+
+
+
+
+
+Looking for more? Visit https://linkerd.io/2/tasks
